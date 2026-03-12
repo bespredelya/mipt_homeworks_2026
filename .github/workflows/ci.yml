@@ -6,7 +6,7 @@ on:
       package_path:
         description: 'Path to package directory'
         required: true
-        default: 'Part 1 - Variables, Conditions, Loops'
+        default: 'Part_2_Variables_Conditions_Loops'
       run_ty:
         description: 'Run ty type checker'
         required: false
