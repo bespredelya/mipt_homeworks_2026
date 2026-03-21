@@ -200,9 +200,6 @@ def add_category(
 def get_cost_values(
         elem: list[Any],
         date_stats: tuple[int, int, int],
-        day: int,
-        month: int,
-        year: int,
         categories: dict[str, float],
 ) -> tuple[float, float]:
     parsed_date = extract_date(elem[0])
@@ -212,7 +209,7 @@ def get_cost_values(
     month_cost = 0
     if check_date(parsed_date, date_stats):
         total_cost += elem[2]
-    if is_same_month(parsed_date, day, month, year):
+    if is_same_month(parsed_date, date_stats[0], date_stats[1], date_stats[2]):
         month_cost += elem[2]
         add_category(categories, elem[1], elem[2])
     return total_cost, month_cost
@@ -224,14 +221,7 @@ def cost_stats(day: int, month: int, year: int) -> tuple[float, float, dict[str,
     categories: dict[str, float] = {}
     date_stats = (day, month, year)
     for elem in COST_MASSIVE:
-        add_cost, add_month = get_cost_values(
-            elem,
-            date_stats,
-            day,
-            month,
-            year,
-            categories,
-        )
+        add_cost, add_month = get_cost_values(elem, date_stats, categories)
         cost += add_cost
         this_month_cost += add_month
     return cost, this_month_cost, categories
@@ -307,7 +297,7 @@ def validate_cost_data(
 ) -> str | None:
     if category_handler(category) is None:
         categories = cost_categories_handler()
-        return "\n".join((NOT_EXISTS_CATEGORY, categories))
+        return f"{NOT_EXISTS_CATEGORY}\n{categories}"
     if is_correct_number(amount_str):
         pass
     else:
