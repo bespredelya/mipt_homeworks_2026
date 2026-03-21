@@ -294,13 +294,16 @@ def response_to_request(request: list[str]) -> str:
     return handler(request)
 
 
+def output(text: str) -> None:
+    print(text)
+
 def main() -> None:
     while True:
         line = input()
         if line == "":
             break
         request = line.split()
-        print(response_to_request(request))
+        output(response_to_request(request))
 
 
 if __name__ == "__main__":
