@@ -213,8 +213,11 @@ def get_cost_values(
         add_category(categories, elem[1], elem[2])
     return total_cost, month_cost
 
-
-def cost_stats(day: int, month: int, year: int) -> tuple[float, float, dict[str, float]]:
+def cost_stats(
+        day: int,
+        month: int,
+        year: int,
+) -> tuple[float, float, dict[str, float]]:
     cost = 0
     this_month_cost = 0
     categories: dict[str, float] = {}
