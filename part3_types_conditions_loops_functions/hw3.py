@@ -175,12 +175,11 @@ def is_same_month(
 def income_stats(day: int, month: int, year: int) -> tuple[float, float]:
     income = 0
     this_month_income = 0
-    date_stats = (day, month, year)
     for date, amount in INCOME_MASSIVE:
         income_date = extract_date(date)
         if income_date is None:
             continue
-        if check_date(income_date, date_stats):
+        if check_date(income_date, (day, month, year)):
             income += amount
         if is_same_month(income_date, day, month, year):
             this_month_income += amount
@@ -219,11 +218,14 @@ def cost_stats(day: int, month: int, year: int) -> tuple[float, float, dict[str,
     cost = 0
     this_month_cost = 0
     categories: dict[str, float] = {}
-    date_stats = (day, month, year)
     for elem in COST_MASSIVE:
-        add_cost, add_month = get_cost_values(elem, date_stats, categories)
-        cost += add_cost
-        this_month_cost += add_month
+        cost_values = get_cost_values(
+            elem,
+            (day, month, year),
+            categories,
+        )
+        cost += cost_values[0]
+        this_month_cost += cost_values[1]
     return cost, this_month_cost, categories
 
 
@@ -311,20 +313,18 @@ def validate_cost_data(
 
 
 def handle_cost_request(request: list[str]) -> str:
-    result = UNKNOWN_COMMAND_MSG
     if len(request) == STATS_COMMAND_LEN and request[1] == "categories":
-        result = cost_categories_handler()
-    elif len(request) == COST_COMMAND_LEN:
+        return cost_categories_handler()
+    if len(request) == COST_COMMAND_LEN:
         category = request[1]
         amount_str = request[2].replace(",", ".")
         date = request[3]
         validation_error = validate_cost_data(category, amount_str, date)
         if validation_error is None:
             amount = float(amount_str)
-            result = cost_handler(category, amount, date)
-        else:
-            result = validation_error
-    return result
+            return cost_handler(category, amount, date)
+        return validation_error
+    return UNKNOWN_COMMAND_MSG
 
 
 def handle_stats_request(request: list[str]) -> str:
