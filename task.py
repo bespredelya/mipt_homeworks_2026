@@ -252,7 +252,7 @@ def handle_cost_request(request: list[str]) -> str:
     result = UNKNOWN_COMMAND_MSG
     if len(request) == STATS_COMMAND_LEN and request[1] == "categories":
         result = cost_categories_handler()
-    elif len(request) != COST_COMMAND_LEN:
+    elif len(request) == COST_COMMAND_LEN:
         category = request[1]
         amount_str = request[2].replace(",", ".")
         date = request[3]
@@ -265,11 +265,10 @@ def handle_cost_request(request: list[str]) -> str:
             amount = float(amount_str)
             if amount <= 0:
                 return NONPOSITIVE_VALUE_MSG
-            elif extract_date(date) is None:
+            if extract_date(date) is None:
                 return INCORRECT_DATE_MSG
-            else:
-                result = cost_handler(category, amount, date)
-    return result 
+            result = cost_handler(category, amount, date)
+    return result
 
 def handle_stats_request(request: list[str]) -> str:
     if len(request) != STATS_COMMAND_LEN:
