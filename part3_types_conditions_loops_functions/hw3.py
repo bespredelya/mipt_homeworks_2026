@@ -16,8 +16,12 @@ TWO_PARTS_COUNT = 2
 INCOME_COMMAND_LEN = 3
 COST_COMMAND_LEN = 4
 STATS_COMMAND_LEN = 2
-COST_MASSIVE = []
-INCOME_MASSIVE = []
+
+IncomeElem = tuple[str, float]
+CostElem = tuple[str, str, float]
+
+COST_MASSIVE: list[CostElem] = []
+INCOME_MASSIVE: list[IncomeElem] = []
 
 EXPENSE_CATEGORIES = {
     "Food": ("Supermarket", "Restaurants", "FastFood", "Coffee", "Delivery"),
@@ -96,7 +100,7 @@ def income_handler(amount: float, income_date: str) -> str:
         financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
     financial_transactions_storage.append({"amount": amount, "date": date})
-    INCOME_MASSIVE.append([income_date, amount])
+    INCOME_MASSIVE.append((income_date, amount))
     return OP_SUCCESS_MSG
 
 
@@ -112,13 +116,14 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
         financial_transactions_storage.append({})
         return INCORRECT_DATE_MSG
     financial_transactions_storage.append(
-        {"category": category_name, "amount": amount, "date": date})
-    COST_MASSIVE.append([income_date, category_name, amount])
+        {"category": category_name, "amount": amount, "date": date},
+    )
+    COST_MASSIVE.append((income_date, category_name, amount))
     return OP_SUCCESS_MSG
 
 
 def cost_categories_handler() -> str:
-    categories = []
+    categories: list[str] = []
     for elem, values in EXPENSE_CATEGORIES.items():
         categories.extend(f"{elem}::{categorie}" for categorie in values)
     return "\n".join(categories)
@@ -173,8 +178,8 @@ def is_same_month(
 
 
 def income_stats(day: int, month: int, year: int) -> tuple[float, float]:
-    income = 0
-    this_month_income = 0
+    income = 0.0
+    this_month_income = 0.0
     for date, amount in INCOME_MASSIVE:
         income_date = extract_date(date)
         if income_date is None:
@@ -197,15 +202,15 @@ def add_category(
 
 
 def get_cost_values(
-        elem: list[Any],
+        elem: CostElem,
         date_stats: tuple[int, int, int],
         categories: dict[str, float],
 ) -> tuple[float, float]:
     parsed_date = extract_date(elem[0])
     if parsed_date is None:
-        return 0, 0
-    total_cost = 0
-    month_cost = 0
+        return 0.0, 0.0
+    total_cost = 0.0
+    month_cost = 0.0
     if check_date(parsed_date, date_stats):
         total_cost += elem[2]
     if is_same_month(parsed_date, date_stats[0], date_stats[1], date_stats[2]):
@@ -219,8 +224,8 @@ def cost_stats(
         month: int,
         year: int,
 ) -> tuple[float, float, dict[str, float]]:
-    cost = 0
-    this_month_cost = 0
+    cost = 0.0
+    this_month_cost = 0.0
     categories: dict[str, float] = {}
     for elem in COST_MASSIVE:
         cost_values = get_cost_values(
