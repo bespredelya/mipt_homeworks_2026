@@ -14,7 +14,6 @@ TWO_PARTS_COUNT = 2
 INCOME_COMMAND_LEN = 3
 COST_COMMAND_LEN = 4
 STATS_COMMAND_LEN = 2
-
 COST_MASSIVE = []
 INCOME_MASSIVE = []
 
@@ -194,12 +193,11 @@ def cost_stats(day: int, month: int, year: int) -> tuple[float, float, dict[str,
 
 
 def stats_response(
-        date: str,
-        balance: float,
-        maybe_profit: float,
-        this_month_income: float,
-        this_month_cost: float,
-        categories: dict[str, float]) -> str:
+    date: str,
+    money_stats: tuple[float, float, float, float],
+    categories: dict[str, float],
+) -> str:
+    balance, maybe_profit, this_month_income, this_month_cost = money_stats
     answer = []
     answer.append(f"Your statistics as of {date}:")
     answer.append(f"Total capital: {balance:.2f} rubles")
@@ -230,10 +228,7 @@ def stats_handler(report_date: str) -> str:
     maybe_profit = this_month_income - this_month_cost
     return stats_response(
         report_date,
-        balance,
-        maybe_profit,
-        this_month_income,
-        this_month_cost,
+        (balance, maybe_profit, this_month_income, this_month_cost),
         categories,
     )
 
@@ -254,25 +249,27 @@ def handle_income_request(request: list) -> str:
 
 
 def handle_cost_request(request: list[str]) -> str:
+    result = UNKNOWN_COMMAND_MSG
     if len(request) == STATS_COMMAND_LEN and request[1] == "categories":
-        return cost_categories_handler()
-    if len(request) != COST_COMMAND_LEN:
-        return UNKNOWN_COMMAND_MSG
-    category = request[1]
-    amount_str = request[2].replace(",", ".")
-    date = request[3]
-    if category_handler(category) is None:
-        categories = cost_categories_handler()
-        return NOT_EXISTS_CATEGORY + "\n" + categories
-    if not is_correct_number(amount_str):
-        return NONPOSITIVE_VALUE_MSG
-    amount = float(amount_str)
-    if amount <= 0:
-        return NONPOSITIVE_VALUE_MSG
-    if extract_date(date) is None:
-        return INCORRECT_DATE_MSG
-    return cost_handler(category, amount, date)
-
+        result = cost_categories_handler()
+    elif len(request) != COST_COMMAND_LEN:
+        category = request[1]
+        amount_str = request[2].replace(",", ".")
+        date = request[3]
+        if category_handler(category) is None:
+            categories = cost_categories_handler()
+            result = NOT_EXISTS_CATEGORY + "\n" + categories
+        elif not is_correct_number(amount_str):
+            result = NONPOSITIVE_VALUE_MSG
+        else:
+            amount = float(amount_str)
+            if amount <= 0:
+                return NONPOSITIVE_VALUE_MSG
+            elif extract_date(date) is None:
+                return INCORRECT_DATE_MSG
+            else:
+                result = cost_handler(category, amount, date)
+    return result 
 
 def handle_stats_request(request: list[str]) -> str:
     if len(request) != STATS_COMMAND_LEN:
