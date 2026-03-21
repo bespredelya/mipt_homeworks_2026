@@ -99,6 +99,7 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
         financial_transactions_storage.append({})
         return NONPOSITIVE_VALUE_MSG
     if category_handler(category_name) is None:
+        financial_transactions_storage.append({})
         return NOT_EXISTS_CATEGORY
     if date is None:
         financial_transactions_storage.append({})
