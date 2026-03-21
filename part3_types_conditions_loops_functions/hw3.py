@@ -178,8 +178,8 @@ def is_same_month(
 
 
 def income_stats(day: int, month: int, year: int) -> tuple[float, float]:
-    income = 0.0
-    this_month_income = 0.0
+    income: float = 0
+    this_month_income: float = 0
     for date, amount in INCOME_MASSIVE:
         income_date = extract_date(date)
         if income_date is None:
@@ -208,9 +208,9 @@ def get_cost_values(
 ) -> tuple[float, float]:
     parsed_date = extract_date(elem[0])
     if parsed_date is None:
-        return 0.0, 0.0
-    total_cost = 0.0
-    month_cost = 0.0
+        return 0, 0
+    total_cost: float = 0
+    month_cost: float = 0
     if check_date(parsed_date, date_stats):
         total_cost += elem[2]
     if is_same_month(parsed_date, date_stats[0], date_stats[1], date_stats[2]):
@@ -224,8 +224,8 @@ def cost_stats(
         month: int,
         year: int,
 ) -> tuple[float, float, dict[str, float]]:
-    cost = 0.0
-    this_month_cost = 0.0
+    cost: float = 0
+    this_month_cost: float = 0
     categories: dict[str, float] = {}
     for elem in COST_MASSIVE:
         cost_values = get_cost_values(
