@@ -212,7 +212,7 @@ def stats_response(
     sorted_categories = sorted(categories.keys())
     for index, category in enumerate(sorted_categories, start=1):
         amount = categories[category]
-        answer.append("{}. {}: {}".format(index, category, amount_check(amount)))
+        answer.append(f"{index}. {category}: {amount_check(amount)}")
     return "\n".join(answer)
 
 
