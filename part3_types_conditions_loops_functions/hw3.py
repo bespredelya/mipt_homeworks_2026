@@ -215,9 +215,7 @@ def get_cost_values(
 
 def cost_stats(
         day: int,
-        month: int,
-        year: int,
-) -> tuple[float, float, dict[str, float]]:
+        month: int, year: int, ) -> tuple[float, float, dict[str, float]]:
     cost = 0
     this_month_cost = 0
     categories: dict[str, float] = {}
