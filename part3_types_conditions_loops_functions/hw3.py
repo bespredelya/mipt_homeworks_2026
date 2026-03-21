@@ -48,7 +48,7 @@ def get_days_in_month(month: int, year: int) -> int:
         if is_leap_year(year):
             return 29
         return 28
-    if month in [1, 3, 5, 7, 8, 10, 12]:
+    if month in (1, 3, 5, 7, 8, 10, 12):
         return 31
     return 30
 
@@ -62,11 +62,15 @@ def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
     year = consist_of[2]
     if not (day.isdigit() and month.isdigit() and year.isdigit()):
         return None
-    if not (1 <= int(month) <= MONTHS_IN_YEAR):
+    month_t = int(month)
+    year_y = int(year)
+    day_y = int(day)
+    if not (1 <= month_t <= MONTHS_IN_YEAR):
         return None
-    if not (1 <= int(day) <= get_days_in_month(int(month), int(year))):
+    max_days = get_days_in_month(month_t, year_y)
+    if not (1 <= day_y <= max_days):
         return None
-    return int(day), int(month), int(year)
+    return day_y, month_t, year_y
 
 
 def is_correct_number(value: str) -> bool:
@@ -147,64 +151,43 @@ def check_date(
         current_date: tuple[int, int, int],
         date_stats: tuple[int, int, int],
 ) -> bool:
-    current_day, current_month, current_year = current_date
-    day, month, year = date_stats
-    return (
-            current_year < year
-            or (current_year == year and current_month < month)
-            or (
-                    current_year == year
-                    and current_month == month
-                    and current_day <= day
-            )
+    return (current_date[2], current_date[1], current_date[0]) <= (
+        date_stats[2],
+        date_stats[1],
+        date_stats[0],
     )
 
 
 def income_stats(day: int, month: int, year: int) -> tuple[float, float]:
-    income = 0.0
-    this_month_income = 0.0
+    income = 0
+    this_month_income = 0
     date_stats = (day, month, year)
-    for elem in INCOME_MASSIVE:
-        date = elem[0]
-        amount = elem[1]
+    for date, amount in INCOME_MASSIVE:
         income_date = extract_date(date)
         if income_date is None:
             continue
-        income_day, income_month, income_year = income_date
-        if check_date((income_day, income_month, income_year), date_stats):
+        if check_date(income_date, date_stats):
             income += amount
-        if (
-                income_year == year
-                and income_month == month
-                and income_day <= day
-        ):
+        if income_date[2] == year and income_date[1] == month and income_date[0] <= day:
             this_month_income += amount
     return income, this_month_income
 
 
 def cost_stats(day: int, month: int, year: int) -> tuple[float, float, dict[str, float]]:
-    cost = 0.0
-    this_month_cost = 0.0
+    cost = 0
+    this_month_cost = 0
     categories: dict[str, float] = {}
     date_stats = (day, month, year)
-    for elem in COST_MASSIVE:
-        cost_date = elem[0]
-        category = elem[1]
-        amount = elem[2]
-        check_cost_date = extract_date(cost_date)
-        if check_cost_date is None:
+    for cost_date, category, amount in COST_MASSIVE:
+        parsed_date = extract_date(cost_date)
+        if parsed_date is None:
             continue
-        cost_day, cost_month, cost_year = check_cost_date
-        if check_date((cost_day, cost_month, cost_year), date_stats):
+        if check_date(parsed_date, date_stats):
             cost += amount
-        if (
-                cost_year == year
-                and cost_month == month
-                and cost_day <= day
-        ):
+        if parsed_date[2] == year and parsed_date[1] == month and parsed_date[0] <= day:
             this_month_cost += amount
             if category not in categories:
-                categories[category] = 0.0
+                categories[category] = 0
             categories[category] += amount
     return cost, this_month_cost, categories
 
@@ -227,10 +210,9 @@ def stats_response(
     answer.append("")
     answer.append("Details (category: amount):")
     sorted_categories = sorted(categories.keys())
-    for i in range(len(sorted_categories)):
-        category = sorted_categories[i]
+    for index, category in enumerate(sorted_categories, start=1):
         amount = categories[category]
-        answer.append(f"{i + 1}. {category}: {amount_check(amount)}")
+        answer.append("{}. {}: {}".format(index, category, amount_check(amount)))
     return "\n".join(answer)
 
 
@@ -238,19 +220,21 @@ def stats_handler(report_date: str) -> str:
     our_date = extract_date(report_date)
     if our_date is None:
         return INCORRECT_DATE_MSG
-    day, month, year = our_date
-    income, this_month_income = income_stats(day, month, year)
-    cost, this_month_cost, categories = cost_stats(day, month, year)
-    balance = income - cost
-    maybe_profit = this_month_income - this_month_cost
+    income, this_month_income = income_stats(*our_date)
+    cost, this_month_cost, categories = cost_stats(*our_date)
     return stats_response(
         report_date,
-        (balance, maybe_profit, this_month_income, this_month_cost),
+        (
+            income - cost,
+            this_month_income - this_month_cost,
+            this_month_income,
+            this_month_cost,
+        ),
         categories,
     )
 
 
-def handle_income_request(request: list) -> str:
+def handle_income_request(request: list[str]) -> str:
     if len(request) != INCOME_COMMAND_LEN:
         return UNKNOWN_COMMAND_MSG
     amount_str = request[1].replace(",", ".")
