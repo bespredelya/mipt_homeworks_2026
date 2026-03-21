@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from typing import Any
 
 UNKNOWN_COMMAND_MSG = "Unknown command!"
@@ -82,17 +80,27 @@ def is_correct_number(value: str) -> bool:
 
 
 def income_handler(amount: float, income_date: str) -> str:
+    date = extract_date(income_date)
+    financial_transactions_storage.append({"amount": amount, "date":
+    date if date is not None else income_date})
     if amount <= 0:
         return NONPOSITIVE_VALUE_MSG
-    financial_transactions_storage.append({"amount": amount, "date": income_date})
+    if date is None:
+        return INCORRECT_DATE_MSG
     INCOME_MASSIVE.append([income_date, amount])
     return OP_SUCCESS_MSG
 
 
 def cost_handler(category_name: str, amount: float, income_date: str) -> str:
+    date = extract_date(income_date)
+    financial_transactions_storage.append({"category": category_name, "amount": amount, "date":
+        date if date is not None else income_date})
     if amount <= 0:
         return NONPOSITIVE_VALUE_MSG
-    financial_transactions_storage.append({"category": category_name, "amount": amount, "date": income_date})
+    if category_handler(category_name) is None:
+        return NOT_EXISTS_CATEGORY
+    if date is None:
+        return INCORRECT_DATE_MSG
     COST_MASSIVE.append([income_date, category_name, amount])
     return OP_SUCCESS_MSG
 
