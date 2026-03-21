@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from typing import Any
 
 UNKNOWN_COMMAND_MSG = "Unknown command!"
@@ -7,6 +5,16 @@ NONPOSITIVE_VALUE_MSG = "Value must be grater than zero!"
 INCORRECT_DATE_MSG = "Invalid date!"
 NOT_EXISTS_CATEGORY = "Category not exists!"
 OP_SUCCESS_MSG = "Added"
+
+FEBRUARY = 2
+DATE_PARTS_COUNT = 3
+MONTHS_IN_YEAR = 12
+ONE_PART_COUNT = 1
+TWO_PARTS_COUNT = 2
+INCOME_COMMAND_LEN = 3
+COST_COMMAND_LEN = 4
+STATS_COMMAND_LEN = 2
+
 COST_MASSIVE = []
 INCOME_MASSIVE = []
 
@@ -26,24 +34,15 @@ financial_transactions_storage: list[dict[str, Any]] = []
 
 
 def is_leap_year(year: int) -> bool:
-    """
-    Для заданного года определяет: високосный (True) или невисокосный (False).
-
-    :param int year: Проверяемый год
-    :return: Значение високосности.
-    :rtype: bool
-    """
-    if year % 4 == 0:
-        if year % 100 != 0:
-            return True
-        if year % 400 == 0:
-            return True
+    if year % 4 != 0:
         return False
-    return False
+    if year % 100 != 0:
+        return True
+    return year % 400 == 0
 
 
 def get_days_in_month(month: int, year: int) -> int:
-    if month == 2:
+    if month == FEBRUARY:
         if is_leap_year(year):
             return 29
         return 28
@@ -53,22 +52,15 @@ def get_days_in_month(month: int, year: int) -> int:
 
 
 def extract_date(maybe_dt: str) -> tuple[int, int, int] | None:
-    """
-    Парсит дату формата DD-MM-YYYY из строки.
-
-    :param str maybe_dt: Проверяемая строка
-    :return: tuple формата (день, месяц, год) или None, если дата неправильная.
-    :rtype: tuple[int, int, int] | None
-    """
     consist_of = maybe_dt.split("-")
-    if len(consist_of) != 3:
+    if len(consist_of) != DATE_PARTS_COUNT:
         return None
     day = consist_of[0]
     month = consist_of[1]
     year = consist_of[2]
     if not (day.isdigit() and month.isdigit() and year.isdigit()):
         return None
-    if not (1 <= int(month) <= 12):
+    if not (1 <= int(month) <= MONTHS_IN_YEAR):
         return None
     if not (1 <= int(day) <= get_days_in_month(int(month), int(year))):
         return None
@@ -79,9 +71,9 @@ def is_correct_number(value: str) -> bool:
     if value.count(".") > 1:
         return False
     parts = value.split(".")
-    if len(parts) == 1:
+    if len(parts) == ONE_PART_COUNT:
         return parts[0].isdigit()
-    if len(parts) == 2:
+    if len(parts) == TWO_PARTS_COUNT:
         if parts[0] == "" or parts[1] == "":
             return False
         return parts[0].isdigit() and parts[1].isdigit()
@@ -106,15 +98,14 @@ def cost_handler(category_name: str, amount: float, income_date: str) -> str:
 
 def cost_categories_handler() -> str:
     categories = []
-    for elem in EXPENSE_CATEGORIES:
-        for categorie in EXPENSE_CATEGORIES[elem]:
-            categories.append(elem + "::" + categorie)
+    for elem, values in EXPENSE_CATEGORIES.items():
+        categories.extend(f"{elem}::{categorie}" for categorie in values)
     return "\n".join(categories)
 
 
 def category_handler(category_name: str) -> tuple[str, str] | None:
     pieces = category_name.split("::")
-    if len(pieces) != 2:
+    if len(pieces) != TWO_PARTS_COUNT:
         return None
     one_category = pieces[0]
     two_category = pieces[1]
@@ -136,48 +127,81 @@ def amount_check(amount: float) -> str:
     return amount_str
 
 
-def stats_handler(report_date: str) -> str:
-    our_date = extract_date(report_date)
-    if our_date is None:
-        return INCORRECT_DATE_MSG
-    day, month, year = our_date
+def check_date(
+        current_date: tuple[int, int, int],
+        date_stats: tuple[int, int, int],
+) -> bool:
+    current_day, current_month, current_year = current_date
+    day, month, year = date_stats
+    return (
+            current_year < year
+            or (current_year == year and current_month < month)
+            or (
+                    current_year == year
+                    and current_month == month
+                    and current_day <= day
+            )
+    )
+
+
+def income_stats(day: int, month: int, year: int) -> tuple[float, float]:
     income = 0.0
-    cost = 0.0
     this_month_income = 0.0
-    this_month_cost = 0.0
-    categories = {}
+    date_stats = (day, month, year)
     for elem in INCOME_MASSIVE:
-        income_date = elem[0]
+        date = elem[0]
         amount = elem[1]
-        income_day, income_month, income_year = extract_date(income_date)
-        if (
-                income_year < year
-                or (income_year == year and income_month < month)
-                or (income_year == year and income_month == month and income_day <= day)
-        ):
+        income_date = extract_date(date)
+        if income_date is None:
+            continue
+        income_day, income_month, income_year = income_date
+        if check_date((income_day, income_month, income_year), date_stats):
             income += amount
-        if income_year == year and income_month == month and income_day <= day:
+        if (
+                income_year == year
+                and income_month == month
+                and income_day <= day
+        ):
             this_month_income += amount
+    return income, this_month_income
+
+
+def cost_stats(day: int, month: int, year: int) -> tuple[float, float, dict[str, float]]:
+    cost = 0.0
+    this_month_cost = 0.0
+    categories: dict[str, float] = {}
+    date_stats = (day, month, year)
     for elem in COST_MASSIVE:
         cost_date = elem[0]
         category = elem[1]
         amount = elem[2]
-        cost_day, cost_month, cost_year = extract_date(cost_date)
-        if (
-                cost_year < year
-                or (cost_year == year and cost_month < month)
-                or (cost_year == year and cost_month == month and cost_day <= day)
-        ):
+        check_cost_date = extract_date(cost_date)
+        if check_cost_date is None:
+            continue
+        cost_day, cost_month, cost_year = check_cost_date
+        if check_date((cost_day, cost_month, cost_year), date_stats):
             cost += amount
-        if cost_year == year and cost_month == month and cost_day <= day:
+        if (
+                cost_year == year
+                and cost_month == month
+                and cost_day <= day
+        ):
             this_month_cost += amount
             if category not in categories:
                 categories[category] = 0.0
             categories[category] += amount
-    balance = income - cost
-    maybe_profit = this_month_income - this_month_cost
+    return cost, this_month_cost, categories
+
+
+def stats_response(
+        date: str,
+        balance: float,
+        maybe_profit: float,
+        this_month_income: float,
+        this_month_cost: float,
+        categories: dict[str, float]) -> str:
     answer = []
-    answer.append(f"Your statistics as of {report_date}:")
+    answer.append(f"Your statistics as of {date}:")
     answer.append(f"Total capital: {balance:.2f} rubles")
     if maybe_profit >= 0:
         answer.append(f"This month, the profit amounted to {maybe_profit:.2f} rubles.")
@@ -195,51 +219,83 @@ def stats_handler(report_date: str) -> str:
     return "\n".join(answer)
 
 
-def response_to_request(request: list) -> str:
+def stats_handler(report_date: str) -> str:
+    our_date = extract_date(report_date)
+    if our_date is None:
+        return INCORRECT_DATE_MSG
+    day, month, year = our_date
+    income, this_month_income = income_stats(day, month, year)
+    cost, this_month_cost, categories = cost_stats(day, month, year)
+    balance = income - cost
+    maybe_profit = this_month_income - this_month_cost
+    return stats_response(
+        report_date,
+        balance,
+        maybe_profit,
+        this_month_income,
+        this_month_cost,
+        categories,
+    )
+
+
+def handle_income_request(request: list) -> str:
+    if len(request) != INCOME_COMMAND_LEN:
+        return UNKNOWN_COMMAND_MSG
+    amount_str = request[1].replace(",", ".")
+    date = request[2]
+    if not is_correct_number(amount_str):
+        return NONPOSITIVE_VALUE_MSG
+    amount = float(amount_str)
+    if amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    if extract_date(date) is None:
+        return INCORRECT_DATE_MSG
+    return income_handler(amount, date)
+
+
+def handle_cost_request(request: list[str]) -> str:
+    if len(request) == STATS_COMMAND_LEN and request[1] == "categories":
+        return cost_categories_handler()
+    if len(request) != COST_COMMAND_LEN:
+        return UNKNOWN_COMMAND_MSG
+    category = request[1]
+    amount_str = request[2].replace(",", ".")
+    date = request[3]
+    if category_handler(category) is None:
+        categories = cost_categories_handler()
+        return NOT_EXISTS_CATEGORY + "\n" + categories
+    if not is_correct_number(amount_str):
+        return NONPOSITIVE_VALUE_MSG
+    amount = float(amount_str)
+    if amount <= 0:
+        return NONPOSITIVE_VALUE_MSG
+    if extract_date(date) is None:
+        return INCORRECT_DATE_MSG
+    return cost_handler(category, amount, date)
+
+
+def handle_stats_request(request: list[str]) -> str:
+    if len(request) != STATS_COMMAND_LEN:
+        return UNKNOWN_COMMAND_MSG
+    date = request[1]
+    if extract_date(date) is None:
+        return INCORRECT_DATE_MSG
+    return stats_handler(date)
+
+
+def response_to_request(request: list[str]) -> str:
     if len(request) == 0:
         return UNKNOWN_COMMAND_MSG
     activity = request[0]
-    if activity == "income":
-        if len(request) != 3:
-            return UNKNOWN_COMMAND_MSG
-        amount_str = request[1].replace(",", ".")
-        date = request[2]
-        if not is_correct_number(amount_str):
-            return NONPOSITIVE_VALUE_MSG
-        amount = float(amount_str)
-        if amount <= 0:
-            return NONPOSITIVE_VALUE_MSG
-        if extract_date(date) is None:
-            return INCORRECT_DATE_MSG
-        return income_handler(amount, date)
-    elif activity == "cost":
-        if len(request) == 2 and request[1] == "categories":
-            return cost_categories_handler()
-        if len(request) != 4:
-            return UNKNOWN_COMMAND_MSG
-        category = request[1]
-        amount_str = request[2].replace(",", ".")
-        date = request[3]
-        if category_handler(category) is None:
-            categories = cost_categories_handler()
-            return NOT_EXISTS_CATEGORY + "\n" + categories
-        if not is_correct_number(amount_str):
-            return NONPOSITIVE_VALUE_MSG
-        amount = float(amount_str)
-        if amount <= 0:
-            return NONPOSITIVE_VALUE_MSG
-        if extract_date(date) is None:
-            return INCORRECT_DATE_MSG
-        return cost_handler(category, amount, date)
-    elif activity == "stats":
-        if len(request) != 2:
-            return UNKNOWN_COMMAND_MSG
-        date = request[1]
-        if extract_date(date) is None:
-            return INCORRECT_DATE_MSG
-        return stats_handler(date)
-    else:
+    handlers = {
+        "income": handle_income_request,
+        "cost": handle_cost_request,
+        "stats": handle_stats_request,
+    }
+    handler = handlers.get(activity)
+    if handler is None:
         return UNKNOWN_COMMAND_MSG
+    return handler(request)
 
 
 def main() -> None:
