@@ -33,7 +33,6 @@ EXPENSE_CATEGORIES = {
     "Education": ("Courses", "Books", "Tutors"),
     "Communications": ("Mobile", "Internet", "Subscriptions"),
     "Other": ("SomeCategory", "SomeOtherCategory"),
-    "Other": ("Other",),
 }
 
 financial_transactions_storage: list[dict[str, Any]] = []
