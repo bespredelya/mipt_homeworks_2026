@@ -170,3 +170,4 @@ class CachedProperty[V]:
         value = self.func(instance)
         instance.cache.set(self.func.__name__, value)
         return value
+    
