@@ -18,14 +18,10 @@ class DictStorage(Storage[K, V]):
     def get(self, key: K) -> V | None:
         if key in self._data:
             return self._data[key]
-        else:
-            return None
+        return None
 
     def exists(self, key: K) -> bool:
-        if key in self._data:
-            return True
-        else:
-            return False
+        return key in self._data
 
     def remove(self, key: K) -> None:
         if key in self._data:
@@ -47,8 +43,7 @@ class FIFOPolicy(Policy[K]):
     def get_key_to_evict(self) -> K | None:
         if len(self._order) > self.capacity:
             return self._order[0]
-        else:
-            return None
+        return None
 
     def remove_key(self, key: K) -> None:
         if key in self._order:
@@ -75,8 +70,7 @@ class LRUPolicy(Policy[K]):
     def get_key_to_evict(self) -> K | None:
         if len(self._order) > self.capacity:
             return self._order[0]
-        else:
-            return None
+        return None
 
     def remove_key(self, key: K) -> None:
         if key in self._order:
@@ -106,6 +100,7 @@ class LFUPolicy(Policy[K]):
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) <= self.capacity:
             return None
+
         min_count = None
         key_to_evict = None
         for key in self._order[:-1]:
@@ -129,6 +124,7 @@ class LFUPolicy(Policy[K]):
     def has_keys(self) -> bool:
         return len(self._key_counter) > 0
 
+
 class MIPTCache(Cache[K, V]):
     def __init__(self, storage: Storage[K, V], policy: Policy[K]) -> None:
         self.storage = storage
@@ -147,8 +143,7 @@ class MIPTCache(Cache[K, V]):
         if self.storage.exists(key):
             self.policy.register_access(key)
             return self.storage.get(key)
-        else:
-            return None
+        return None
 
     def exists(self, key: K) -> bool:
         return self.storage.exists(key)
