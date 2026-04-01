@@ -16,16 +16,13 @@ class DictStorage(Storage[K, V]):
         self._data[key] = value
 
     def get(self, key: K) -> V | None:
-        if key in self._data:
-            return self._data[key]
-        return None
+        return self._data.get(key)
 
     def exists(self, key: K) -> bool:
         return key in self._data
 
     def remove(self, key: K) -> None:
-        if key in self._data:
-            del self._data[key]
+        self._data.pop(key, None)
 
     def clear(self) -> None:
         self._data.clear()
@@ -91,11 +88,14 @@ class LFUPolicy(Policy[K]):
     _order: list[K] = field(default_factory=list, init=False)
 
     def register_access(self, key: K) -> None:
-        if key in self._key_counter:
-            self._key_counter[key] += 1
-        else:
+        current_count = self._key_counter.get(key)
+
+        if current_count is None:
             self._key_counter[key] = 1
             self._order.append(key)
+            return
+
+        self._key_counter[key] = current_count + 1
 
     def get_key_to_evict(self) -> K | None:
         if len(self._key_counter) <= self.capacity:
@@ -103,16 +103,19 @@ class LFUPolicy(Policy[K]):
 
         min_count = None
         key_to_evict = None
+
         for key in self._order[:-1]:
-            count = self._key_counter[key]
+            count = self._key_counter.get(key)
+            if count is None:
+                continue
             if min_count is None or count < min_count:
                 min_count = count
                 key_to_evict = key
+
         return key_to_evict
 
     def remove_key(self, key: K) -> None:
-        if key in self._key_counter:
-            del self._key_counter[key]
+        self._key_counter.pop(key, None)
         if key in self._order:
             self._order.remove(key)
 
