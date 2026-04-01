@@ -169,7 +169,7 @@ class CachedProperty[V]:
         if instance is None:
             return self  # type: ignore[return-value]
         if instance.cache.exists(self.func.__name__):
-            return instance.cache.get(self.func.__name__)
+            return instance.cache.get(self.func.__name__)  # type: ignore[return-value]
         value = self.func(instance)
         instance.cache.set(self.func.__name__, value)
         return value
