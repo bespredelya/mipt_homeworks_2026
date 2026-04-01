@@ -94,36 +94,40 @@ class LRUPolicy(Policy[K]):
 class LFUPolicy(Policy[K]):
     capacity: int = 5
     _key_counter: dict[K, int] = field(default_factory=dict, init=False)
+    _order: list[K] = field(default_factory=list, init=False)
 
     def register_access(self, key: K) -> None:
         if key in self._key_counter:
             self._key_counter[key] += 1
         else:
             self._key_counter[key] = 1
+            self._order.append(key)
 
     def get_key_to_evict(self) -> K | None:
-        if len(self._key_counter) > self.capacity:
-            minimum = None
-            value_with_min_cnt = None
-            for key, count in self._key_counter.items():
-                if minimum is None or count < minimum:
-                    minimum = count
-                    value_with_min_cnt = key
-            return value_with_min_cnt
-        else:
+        if len(self._key_counter) <= self.capacity:
             return None
+        min_count = None
+        key_to_evict = None
+        for key in self._order[:-1]:
+            count = self._key_counter[key]
+            if min_count is None or count < min_count:
+                min_count = count
+                key_to_evict = key
+        return key_to_evict
 
     def remove_key(self, key: K) -> None:
         if key in self._key_counter:
             del self._key_counter[key]
+        if key in self._order:
+            self._order.remove(key)
 
     def clear(self) -> None:
         self._key_counter.clear()
+        self._order.clear()
 
     @property
     def has_keys(self) -> bool:
         return len(self._key_counter) > 0
-
 
 class MIPTCache(Cache[K, V]):
     def __init__(self, storage: Storage[K, V], policy: Policy[K]) -> None:
