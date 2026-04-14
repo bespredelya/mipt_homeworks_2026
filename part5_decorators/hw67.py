@@ -29,10 +29,10 @@ class BreakerError(Exception):
 
 class CircuitBreaker:
     def __init__(
-            self,
-            critical_count: int,
-            time_to_recover: int,
-            triggers_on: type[Exception],
+        self,
+        critical_count: int,
+        time_to_recover: int,
+        triggers_on: type[Exception],
     ):
         errors = []
         if not isinstance(critical_count, int) or critical_count <= 0:
@@ -55,7 +55,10 @@ class CircuitBreaker:
             if self._last_block_time is not None:
                 difference = (now - self._last_block_time).total_seconds()
                 if difference < self._time_to_recover:
-                    raise BreakerError(func_name=full_exception, block_time=self._last_block_time)
+                    raise BreakerError(
+                        func_name=full_exception,
+                        block_time=self._last_block_time,
+                    )
                 self._last_block_time = None
                 self._count_fail = 0
             try:
@@ -64,11 +67,15 @@ class CircuitBreaker:
                 self._count_fail += 1
                 if self._count_fail >= self._critical_count:
                     self._last_block_time = datetime.now(UTC)
-                    raise BreakerError(func_name=full_exception, block_time=self._last_block_time) from error
+                    raise BreakerError(
+                        func_name=full_exception,
+                        block_time=self._last_block_time,
+                    ) from error
                 raise
             else:
                 self._count_fail = 0
                 return result
+
         return wrapper
 
 
