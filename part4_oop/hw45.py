@@ -167,7 +167,7 @@ class CachedProperty[V]:
 
     def __get__(self, instance: HasCache[Any, Any] | None, owner: type) -> V | Self:
         if instance is None:
-            return self  # type: ignore[return-value]
+            return self
         if instance.cache.exists(self.func.__name__):
             return instance.cache.get(self.func.__name__)  # type: ignore[return-value]
         value = self.func(instance)
