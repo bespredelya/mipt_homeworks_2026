@@ -1,8 +1,8 @@
 import json
-from typing import Any, ParamSpec, Protocol, TypeVar
 from datetime import UTC, datetime
-from urllib.request import urlopen
 from functools import wraps
+from typing import Any, ParamSpec, Protocol, TypeVar
+from urllib.request import urlopen
 
 INVALID_CRITICAL_COUNT = "Breaker count must be positive integer!"
 INVALID_RECOVERY_TIME = "Breaker recovery time must be positive integer!"
@@ -65,7 +65,7 @@ class CircuitBreaker:
                 if self._count_fail >= self._critical_count:
                     self._last_block_time = datetime.now(UTC)
                     raise BreakerError(func_name=full_exception, block_time=self._last_block_time) from error
-                raise error
+                raise
             else:
                 self._count_fail = 0
                 return result
