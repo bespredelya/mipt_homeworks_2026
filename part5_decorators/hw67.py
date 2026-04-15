@@ -67,9 +67,7 @@ class CircuitBreaker:
             block_time=self.last_block_time,
         )
 
-    def __call__(
-        self, func: CallableWithMeta[P, R_co]
-    ) -> CallableWithMeta[P, R_co]:
+    def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
             now = datetime.now(UTC)
@@ -108,9 +106,7 @@ def get_comments(post_id: int) -> Any:
     Returns:
         list[dict[int | str]]: Список комментариев
     """
-    response = urlopen(
-        f"https://jsonplaceholder.typicode.com/comments?postId={post_id}"
-    )
+    response = urlopen(f"https://jsonplaceholder.typicode.com/comments?postId={post_id}")
     return json.loads(response.read())
 
 
