@@ -86,7 +86,8 @@ class CircuitBreaker:
         self.count_fail = 0
 
     def raise_blocked(self, func_name: str) -> None:
-        assert self.last_block_time is not None
+        if self.last_block_time is None:
+            return
         raise BreakerError(
             func_name=func_name,
             block_time=self.last_block_time,
