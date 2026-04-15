@@ -45,7 +45,7 @@ class CircuitBreaker:
         self.time_to_recover = time_to_recover
         self.triggers_on = triggers_on
         self.count_fail = 0
-        self.last_block_time = None
+        self.last_block_time: datetime | None = None
 
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         @wraps(func)
@@ -86,6 +86,7 @@ class CircuitBreaker:
         self.count_fail = 0
 
     def raise_blocked(self, func_name: str) -> None:
+        assert self.last_block_time is not None
         raise BreakerError(
             func_name=func_name,
             block_time=self.last_block_time,
