@@ -47,26 +47,6 @@ class CircuitBreaker:
         self.count_fail = 0
         self.last_block_time = None
 
-    def is_blocked(self, now: datetime) -> bool:
-        if self.last_block_time is None:
-            return False
-        difference = (now - self.last_block_time).total_seconds()
-        return difference < self.time_to_recover
-
-    def reset_if_recovered(self, now: datetime) -> None:
-        if self.last_block_time is None:
-            return
-        if self.is_blocked(now):
-            return
-        self.last_block_time = None
-        self.count_fail = 0
-
-    def raise_blocked(self, func_name: str) -> None:
-        raise BreakerError(
-            func_name=func_name,
-            block_time=self.last_block_time,
-        )
-
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
@@ -90,6 +70,26 @@ class CircuitBreaker:
             return result
 
         return wrapper
+
+    def is_blocked(self, now: datetime) -> bool:
+        if self.last_block_time is None:
+            return False
+        difference = (now - self.last_block_time).total_seconds()
+        return difference < self.time_to_recover
+
+    def reset_if_recovered(self, now: datetime) -> None:
+        if self.last_block_time is None:
+            return
+        if self.is_blocked(now):
+            return
+        self.last_block_time = None
+        self.count_fail = 0
+
+    def raise_blocked(self, func_name: str) -> None:
+        raise BreakerError(
+            func_name=func_name,
+            block_time=self.last_block_time,
+        )
 
 
 circuit_breaker = CircuitBreaker(5, 30, Exception)
