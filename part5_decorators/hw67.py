@@ -41,41 +41,53 @@ class CircuitBreaker:
             errors.append(ValueError(INVALID_RECOVERY_TIME))
         if errors:
             raise ExceptionGroup(VALIDATIONS_FAILED, errors)
-        self._critical_count = critical_count
-        self._time_to_recover = time_to_recover
-        self._triggers_on = triggers_on
-        self._count_fail = 0
-        self._last_block_time = None
+        self.critical_count = critical_count
+        self.time_to_recover = time_to_recover
+        self.triggers_on = triggers_on
+        self.count_fail = 0
+        self.last_block_time = None
+
+    def is_blocked(self, now: datetime) -> bool:
+        if self.last_block_time is None:
+            return False
+        difference = (now - self.last_block_time).total_seconds()
+        return difference < self.time_to_recover
+
+    def reset_if_recovered(self, now: datetime) -> None:
+        if self.last_block_time is None:
+            return
+        if self.is_blocked(now):
+            return
+        self.last_block_time = None
+        self.count_fail = 0
+
+    def raise_blocked(self, func_name: str) -> None:
+        raise BreakerError(
+            func_name=func_name,
+            block_time=self.last_block_time,
+        )
 
     def __call__(self, func: CallableWithMeta[P, R_co]) -> CallableWithMeta[P, R_co]:
         @wraps(func)
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R_co:
             now = datetime.now(UTC)
-            full_exception = f"{func.__module__}.{func.__name__}"
-            if self._last_block_time is not None:
-                difference = (now - self._last_block_time).total_seconds()
-                if difference < self._time_to_recover:
-                    raise BreakerError(
-                        func_name=full_exception,
-                        block_time=self._last_block_time,
-                    )
-                self._last_block_time = None
-                self._count_fail = 0
+            func_name = f"{func.__module__}.{func.__name__}"
+            if self.is_blocked(now):
+                self.raise_blocked(func_name)
+            self.reset_if_recovered(now)
             try:
                 result = func(*args, **kwargs)
-            except self._triggers_on as error:
-                self._count_fail += 1
-                if self._count_fail >= self._critical_count:
-                    self._last_block_time = datetime.now(UTC)
+            except self.triggers_on as error:
+                self.count_fail += 1
+                if self.count_fail >= self.critical_count:
+                    self.last_block_time = now
                     raise BreakerError(
-                        func_name=full_exception,
-                        block_time=self._last_block_time,
+                        func_name=func_name,
+                        block_time=self.last_block_time,
                     ) from error
                 raise
-            else:
-                self._count_fail = 0
-                return result
-
+            self.count_fail = 0
+            return result
         return wrapper
 
 
