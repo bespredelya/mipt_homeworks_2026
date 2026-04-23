@@ -21,7 +21,7 @@ class CallableWithMeta(Protocol[P, R_co]):
 
 
 class BreakerError(Exception):
-    def __init__(self, func_name: str, block_time: datetime):
+    def __init__(self, func_name: str, block_time: datetime) -> None:
         super().__init__(TOO_MUCH)
         self.func_name = func_name
         self.block_time = block_time
@@ -29,11 +29,11 @@ class BreakerError(Exception):
 
 class CircuitBreaker:
     def __init__(
-    self,
-    critical_count: int = 5,
-    time_to_recover: int = 30,
-    triggers_on: type[Exception] = Exception,
-) -> None:
+        self,
+        critical_count: int = 5,
+        time_to_recover: int = 30,
+        triggers_on: type[Exception] = Exception,
+    ) -> None:
         errors = []
         if not isinstance(critical_count, int) or critical_count <= 0:
             errors.append(ValueError(INVALID_CRITICAL_COUNT))
