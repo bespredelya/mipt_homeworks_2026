@@ -29,11 +29,11 @@ class BreakerError(Exception):
 
 class CircuitBreaker:
     def __init__(
-        self,
-        critical_count: int,
-        time_to_recover: int,
-        triggers_on: type[Exception],
-    ):
+    self,
+    critical_count: int = 5,
+    time_to_recover: int = 30,
+    triggers_on: type[Exception] = Exception,
+) -> None:
         errors = []
         if not isinstance(critical_count, int) or critical_count <= 0:
             errors.append(ValueError(INVALID_CRITICAL_COUNT))
@@ -86,8 +86,6 @@ class CircuitBreaker:
         self.count_fail = 0
 
     def raise_blocked(self, func_name: str) -> None:
-        if self.last_block_time is None:
-            return
         raise BreakerError(
             func_name=func_name,
             block_time=self.last_block_time,
