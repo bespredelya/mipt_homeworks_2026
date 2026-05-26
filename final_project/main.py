@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from gigavibe.cli import ChatApp
+from gigavibe.app.cli import ChatApp
 from gigavibe.config import ConfigError, load_config
-from gigavibe.console import print_error
-from gigavibe.llm import LlmClient, LlmError
+from gigavibe.io.console import print_error
+from gigavibe.providers.openai_client import LlmClient, LlmError
 
 
 def main() -> None:

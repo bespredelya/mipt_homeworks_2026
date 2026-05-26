@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from gigavibe.history import ChatHistory
+from gigavibe.context.history import ChatHistory
 
 
 def test_history_trims_old_messages_by_count() -> None:

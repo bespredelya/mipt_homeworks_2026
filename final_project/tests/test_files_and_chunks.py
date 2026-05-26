@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from gigavibe.chunks import ChunkOptions, make_chunks, parse_chunk_command
-from gigavibe.files import FileInsertError, expand_file_references
+from gigavibe.processing.chunks import ChunkOptions, make_chunks, parse_chunk_command
+from gigavibe.io.files import FileInsertError, expand_file_references
 
 
 def test_expand_file_references(tmp_path: Path) -> None:

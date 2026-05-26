@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from gigavibe.llm import collect_stream
+from gigavibe.providers.openai_client import collect_stream
 
 
 @dataclass
