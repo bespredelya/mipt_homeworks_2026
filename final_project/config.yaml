@@ -1,8 +1,0 @@
-api_key: <your_key>
-api_host: http://localhost:11434/v1/
-model: qwen3:4b
-limit_message: 200
-limit_chars: 20000
-temperature: 1
-system_prompt: отвечай как python разработчик!
-stream: true
